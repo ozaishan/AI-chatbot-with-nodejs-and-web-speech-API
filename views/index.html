@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Chatbot — Ollama (local)</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>AI Chatbot (Ollama + Web Speech API)</h1>
+
+    <section class="chat">
+      <div id="messages" class="messages"></div>
+
+      <div class="controls">
+        <input id="input" placeholder="Type your message or use the mic" />
+        <button id="sendBtn">Send</button>
+        <button id="micBtn" title="Start/Stop voice input">🎤</button>
+      </div>
+
+      <div class="options">
+        <label><input id="autoSpeak" type="checkbox" checked /> Auto-speak replies</label>
+      </div>
+    </section>
+
+    <footer>
+      <small>Requires a local Ollama server running (https://ollama.com/). Start Ollama and pull a model, e.g. `ollama pull llama3.2`.</small>
+    </footer>
+  </main>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>
