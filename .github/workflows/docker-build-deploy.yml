@@ -1,0 +1,81 @@
+name: Build, Push and Deploy Docker Image
+
+on:
+  push:
+    branches:
+      - main   
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      # Step 4: Build Docker image and tag it
+      - name: Build Docker image
+        run: |
+          IMAGE_NAME="chatapp"
+          FULL_IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/chatapp:latest"
+          docker build -t $IMAGE_NAME .
+          docker tag $IMAGE_NAME $FULL_IMAGE_NAME
+
+      # Step 5: Push image to Docker Hub
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/chatapp:latest
+
+      # Step 6: Add SSH key with passphrase
+      - name: Start SSH Agent and add private key
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-passphrase: ${{ secrets.SSH_PASSPHRASE }}
+
+      # Step 7: Deploy on remote server via SSH
+      - name: Deploy via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            echo "🚀 Deploying latest Docker image..."
+
+            # Login to Docker Hub on server
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+            # Pull latest image
+            docker pull ${{ secrets.DOCKER_USERNAME }}/chatapp:latest
+
+            # Stop and remove old container
+            docker stop chatapp || true
+            docker rm chatapp || true
+
+            # Run new container
+            docker run -d \
+              --name chatapp \
+              --env-file /home/${{ secrets.SERVER_USER }}/Desktop/chatapp/AI-chatbot-with-nodejs-and-web-speech-API/.env \
+              -p 4000:3000 \
+              ${{ secrets.DOCKER_USERNAME }}/chatapp:latest
+
+            # Logout from Docker Hub
+            docker logout
+
+            echo "✅ Deployment complete!"
+          EOF
+   # Step 8: Logout from SSH agent
+      - name: Stop SSH Agent
+        run: |
+          ssh-add -D
+          echo "🔒 SSH agent cleaned up."
