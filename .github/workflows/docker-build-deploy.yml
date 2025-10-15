@@ -3,7 +3,7 @@ name: Build, Push and Deploy Docker Image
 on:
   push:
     branches:
-      - main   
+      - main
   workflow_dispatch:
 
 jobs:
@@ -36,23 +36,21 @@ jobs:
 
       # Step 5: Push image to Docker Hub
       - name: Push Docker image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/chatapp:latest
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/chatapp:latest
 
-      # Step 6: Add SSH key with passphrase
-      - name: Start SSH Agent and add private key
+      # Step 6: Start SSH Agent and add private key
+      - name: Start SSH Agent
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ssh-passphrase: ${{ secrets.SSH_PASSPHRASE }}
 
-      # Step 7: Deploy on remote server via SSH
+      # Step 7: Deploy on remote server
       - name: Deploy via SSH
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             echo "🚀 Deploying latest Docker image..."
 
-            # Login to Docker Hub on server
+            # Docker Hub login on server
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
             # Pull latest image
@@ -74,4 +72,3 @@ jobs:
 
             echo "✅ Deployment complete!"
           EOF
-  
