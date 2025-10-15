@@ -74,8 +74,4 @@ jobs:
 
             echo "✅ Deployment complete!"
           EOF
-   # Step 8: Logout from SSH agent
-      - name: Stop SSH Agent
-        run: |
-          ssh-add -D
-          echo "🔒 SSH agent cleaned up."
+  
